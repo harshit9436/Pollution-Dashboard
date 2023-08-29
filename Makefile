@@ -1,6 +1,6 @@
 REPO_OWNER := harshit9436
 REPO_NAME := Pollution-Dashboard
-BRANCH := main
+BRANCH := backend
 
 # Define the target to push changes
 push:
