@@ -60,3 +60,4 @@ def query_results(session, params, wait = True):
                 time.sleep(5)
 
         return False
+    
