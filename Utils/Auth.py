@@ -10,6 +10,7 @@ from fastapi.security import (
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from pydantic import BaseModel, ValidationError
+import Utils.MongoDb as mongo
 
 # to get a string like this run:
 # openssl rand -hex 32
@@ -35,7 +36,8 @@ class Token(BaseModel):
 
 
 class TokenData(BaseModel):
-    username: str | None = None
+    uuid : str | None = None
+    # uuid
     # scopes: list[str] = []
 
 
@@ -75,12 +77,14 @@ def get_user(db, username: str):
         return UserInDB(**user_dict)
 
 
-def authenticate_user(fake_db, username: str, password: str):
-    user = get_user(fake_db, username)
+def authenticate_user( username: str, password: str):
+    user = mongo.UserManager.find_user_by_username(username)
+    print("---")
     if not user:
         return False
-    if not verify_password(password, user.hashed_password):
+    if not verify_password(password, user.password):
         return False
+    print(user.username)
     return user
 
 
@@ -98,10 +102,6 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
 async def get_current_user(
     security_scopes: SecurityScopes, token: Annotated[str, Depends(oauth2_scheme)]
 ):
-    # if security_scopes.scopes:
-    #     authenticate_value = f'Bearer scope="{security_scopes.scope_str}"'
-    # else:
-    #     authenticate_value = "Bearer"
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -109,23 +109,16 @@ async def get_current_user(
     )
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        if username is None:
+        uuid: str = payload.get("sub")
+        if uuid is None:
             raise credentials_exception
-        token_scopes = payload.get("scopes", [])
-        token_data = TokenData(scopes=token_scopes, username=username)
+        # token_scopes = payload.get("scopes", [])
+        token_data = TokenData( uuid=uuid)
     except (JWTError, ValidationError):
         raise credentials_exception
-    user = get_user(fake_users_db, username=token_data.username)
+    user = mongo.UserManager.find_user_by_uuid(uuid= token_data.uuid)
     if user is None:
         raise credentials_exception
-    # for scope in security_scopes.scopes:
-    #     if scope not in token_data.scopes:
-    #         raise HTTPException(
-    #             status_code=status.HTTP_401_UNAUTHORIZED,
-    #             detail="Not enough permissions",
-    #             headers={"WWW-Authenticate": authenticate_value},
-    #         )
     return user
 
 
@@ -137,38 +130,4 @@ async def get_current_active_user(
     return current_user
 
 
-# @app.post("/token", response_model=Token)
-# async def login_for_access_token(
-#     form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
-# ):
-#     user = authenticate_user(fake_users_db, form_data.username, form_data.password)
-#     if not user:
-#         raise HTTPException(status_code=400, detail="Incorrect username or password")
-#     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-#     access_token = create_access_token(
-#         data={"sub": user.username},
-#         expires_delta=access_token_expires,
-#     )
-#     return {"access_token": access_token, "token_type": "bearer"}
-
-
-# @app.get("/users/me/", response_model=User)
-# async def read_users_me(
-#     current_user: Annotated[User, Depends(get_current_active_user)]
-# ):
-#     return current_user
-
-
-# @app.get("/users/me/items/")
-# async def read_own_items(
-#     current_user: Annotated[User, Security(get_current_active_user, scopes=["items"])]
-# ):
-#     return [{"item_id": "Foo", "owner": current_user.username}]
-
-
-# @app.get("/status/")
-# async def read_system_status(current_user: Annotated[User, Depends(get_current_user)]):
-#     return {"status": "ok"}
-
-# print(get_password_hash("harshit"))
 

@@ -38,16 +38,7 @@ async def startup_event():
     get_session()
 
 @app.get("/")
-async def root():
-    # global session
-    # if session is None:
-    #     return {"message": "Session is not initialized"}
-    
-    # params['query']= 'SELECT * FROM api_kolkata_glue_db.aqikolkata ORDER BY ts DESC LIMIT 5 ; '
-
-    # location, data = athena.query_results(session, params)
-    # print("Location:", location)
-    # return data
+async def root( current_user: Auth.User = Depends(Auth.get_current_user) ):
     return {"Message" : "hello"}
 
 
@@ -55,12 +46,12 @@ async def root():
 async def login_for_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
 ):
-    user = Auth.authenticate_user(Auth.fake_users_db, form_data.username, form_data.password)
+    user = Auth.authenticate_user( form_data.username, form_data.password)
     if not user:
         raise HTTPException(status_code=400, detail="Incorrect username or password")
     access_token_expires = timedelta(minutes=Auth.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = Auth.create_access_token(
-        data={"sub": user.username, "scopes": form_data.scopes},
+        data={"sub": user.uuid},
         expires_delta=access_token_expires,
     )
     return {"access_token": access_token, "token_type": "bearer"}
@@ -115,7 +106,7 @@ async def get_sensor_data(current_user: Annotated[Auth.User, Depends(Auth.get_cu
     return data
 
 @app.post("/sensors/")
-async def get_sensor_data_from_body(     request: Request,
+async def get_sensor_data_from_body(  request: Request,
     current_user: Auth.User = Depends(Auth.get_current_user) 
 ):
     global session
