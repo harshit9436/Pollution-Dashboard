@@ -8,7 +8,7 @@ def convertTime(timestamp):
     # You can format the datetime as a string if needed
     formatted_datetime = dt.strftime('%Y-%m-%d %H:%M:%S')
 
-    print("Unix Timestamp:", timestamp)
+    # print("Unix Timestamp:", timestamp)
     # print("Datetime:", dt)
     return dt
 
@@ -28,4 +28,4 @@ def offsetUnixTS(offset):
 
     return timestamp
 
-print(currentUnixTS())
+# print(currentUnixTS())

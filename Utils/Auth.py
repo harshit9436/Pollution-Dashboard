@@ -19,15 +19,15 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 
-fake_users_db = {
-    "harshit": {
-        "username": "harshit",
-        # "full_name": "Harhit Kumar",
-        "email": "harshit@example.com",
-        "hashed_password": "$2b$12$wDSgExRd6VyqBkVs73lSdOwNSqmuAxU59Bs1shwSmKVmIAbGW7MWi",
-        "disabled": False,
-    }
-}
+# fake_users_db = {
+#     "harshit": {
+#         "username": "harshit",
+#         # "full_name": "Harhit Kumar",
+#         "email": "harshit@example.com",
+#         "hashed_password": "$2b$12$wDSgExRd6VyqBkVs73lSdOwNSqmuAxU59Bs1shwSmKVmIAbGW7MWi",
+#         "disabled": False,
+#     }
+# }
 
 
 class Token(BaseModel):
@@ -79,12 +79,10 @@ def get_user(db, username: str):
 
 def authenticate_user( username: str, password: str):
     user = mongo.UserManager.find_user_by_username(username)
-    print("---")
     if not user:
         return False
     if not verify_password(password, user.password):
         return False
-    print(user.username)
     return user
 
 

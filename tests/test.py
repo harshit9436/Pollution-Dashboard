@@ -1,5 +1,5 @@
 import boto3
-import athena
+import Utils.athena as athena
 
 params = {
     'region': 'us-east-1',

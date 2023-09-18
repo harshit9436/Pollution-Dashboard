@@ -3,7 +3,6 @@ import pymongo
 
 # Establish a connection to MongoDB (replace with your MongoDB URI)
 client = pymongo.MongoClient("mongodb+srv://harshit:harshit@cluster0.jlhfrqo.mongodb.net/")  # Replace with your MongoDB URI
-
 # Select a database (replace 'mydatabase' with your database name)
 db = client["Dashboard"]
 
@@ -84,11 +83,11 @@ class UserManager:
         return None
 
 # Create a User object
-new_user = User("harshit", "harshit@gmail.com", "harshit")
+# new_user = User("ddd", "hdd@gmail.com", "dd")
 
 # Insert the user into the database
 # UserManager.insert_user(new_user)
 
-# user_by_username = UserManager.find_user_by_uuid("a64f1436-20e3-4784-b617-58dee415bdc6")
-# print(user_by_username.uuid)
+# user_by_username = UserManager.find_user_by_username("harshit")
+# print(user_by_username.username, "hardcoded")
 # user_by_email = UserManager.find_user_by_email("john@example.com")
