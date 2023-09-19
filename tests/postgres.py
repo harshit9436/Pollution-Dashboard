@@ -1,6 +1,7 @@
 import psycopg2
-from psycopg2 import pool  # Import the pool module
-
+from psycopg2 import pool
+from prettytable import PrettyTable  # Import PrettyTable
+from datetime import timedelta
 # Database connection parameters
 db_params = {
     'database': 'postgres',       # Name of the database
@@ -13,7 +14,7 @@ db_params = {
 # Create a connection pool
 conn_pool = pool.SimpleConnectionPool(1, 5, **db_params)
 
-def get_all_mac_ids():
+def print_ts_field():
     try:
         # Get a connection from the pool
         conn = conn_pool.getconn()
@@ -21,53 +22,53 @@ def get_all_mac_ids():
         # Create a cursor object
         cursor = conn.cursor()
 
-        # Build the SQL query to retrieve all unique macids
-        query = """
-            SELECT DISTINCT macid FROM alldata;
-        """
+        # Build the SQL query to retrieve the "ts" field from the table
+        cursor.execute("SELECT MAX(ts) FROM alldata;")
+        latest_timestamp = cursor.fetchone()[0]
+        latest_timestamp = float(latest_timestamp)
+
+        # Calculate the timestamp of 24 hours before the latest timestamp
+        twenty_four_hours_ago = latest_timestamp - timedelta(hours=24).total_seconds()
+
+        # Query to calculate the average of "pm2_5" and "pm10_0" values between the two timestamps
+        cursor.execute(f"""
+            SELECT pm10_0
+            FROM alldata
+            WHERE ts >= {twenty_four_hours_ago} AND ts <= {latest_timestamp};
+        """)
 
         # Execute the query
-        cursor.execute(query)
+        # cursor.execute(query)
 
         # Fetch all rows of the result set
         rows = cursor.fetchall()
+        # sum +=(float(rows[0][0]))
 
-        # Extract macids from the rows
-        mac_ids = [row[0] for row in rows]
+        # Create a PrettyTable object with a single "ts" field
+        table = PrettyTable()
+        table.field_names = ["ts"]
 
-        return mac_ids
+        # Add "ts" field values to the table
+        sum=0.0
+        cnt=0
+        for row in rows:
+            table.add_row([row[0]])
+            # print(type(row[0]))
+            sum+= float(row[0])
+            cnt+=1
+
+        # Print the table
+        print(table)
+        print(sum,cnt)
 
     except psycopg2.Error as e:
         print("Error: Unable to connect to the database.")
         print(e)
-        return []
 
     finally:
         # Close the cursor and return the connection to the pool
         cursor.close()
         conn_pool.putconn(conn)
 
-# Call the function to get all unique macids
-# all_mac_ids = get_all_mac_ids()
-# print(all_mac_ids)
-
-# import json
-
-# mac_ids = [
-#     '84:cc:a8:36:af:7c', '84:cc:a8:36:af:90', '84:cc:a8:36:af:ac', 
-#     '84:cc:a8:36:af:b0', '84:cc:a8:36:af:b4', '84:cc:a8:36:af:f8', 
-#     '84:cc:a8:36:b0:dc', '84:cc:a8:36:b0:e0', '84:cc:a8:36:b3:88', 
-#     '84:cc:a8:36:b3:90', '84:cc:a8:57:c2:60', '8c:4b:14:52:31:3c', 
-#     '8c:4b:14:52:33:1c', '9c:9c:1f:ef:b7:10', '9c:9c:1f:ef:b7:20', 
-#     '9c:9c:1f:ef:b7:6c', '9c:9c:1f:ef:ba:4c', '9c:9c:1f:ef:ba:5c', 
-#     '9c:9c:1f:ef:ba:c8'
-# ]
-
-# # Convert the list into a JSON object
-# mac_ids_json = {"mac_ids": mac_ids}
-
-# # Serialize the JSON object to a string
-# mac_ids_json_str = json.dumps(mac_ids_json, indent=4)
-
-# # Print the JSON string
-# print(mac_ids_json_str)
+# Call the function to print only the "ts" field
+print_ts_field()

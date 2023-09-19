@@ -83,11 +83,11 @@ class UserManager:
         return None
 
 # Create a User object
-# new_user = User("ddd", "hdd@gmail.com", "dd")
+new_user = User("sibasgegsgsish", "hdgdgddd@gmail.com", "sibasish")
 
 # Insert the user into the database
-# UserManager.insert_user(new_user)
+UserManager.insert_user(new_user)
 
-# user_by_username = UserManager.find_user_by_username("harshit")
+user_by_username = UserManager.find_user_by_username("sibasish")
 # print(user_by_username.username, "hardcoded")
 # user_by_email = UserManager.find_user_by_email("john@example.com")

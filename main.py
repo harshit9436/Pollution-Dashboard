@@ -7,9 +7,10 @@ from fastapi.security import (
 )
 import json
 from pydantic import BaseModel
-from datetime import timedelta
+from datetime import timedelta,datetime
+
 import Utils.Utils as Utils
-import Utils.athena as athena
+from datetime import timedelta
 import Utils.Auth as Auth
 from typing import Annotated
 import Utils.MongoDb as mongo
@@ -92,7 +93,7 @@ async def create_user(user_data: mongo.CreateUserRequest):
 
 @app.get("/sensors/{mac_id}/")
 async def get_sensor_data(mac_id: str, 
-                    current_user: Auth.User = Depends(Auth.get_current_user), 
+                    # current_user: Auth.User = Depends(Auth.get_current_user), 
                 offset: str = "7"):
     # Calculate timestamps
     ts_curr = Utils.currentUnixTS()
@@ -143,7 +144,7 @@ async def get_sensor_data(mac_id: str,
 @app.get("/sensors/")
 async def get_sensor_data_from_body(
     request: Request,
-    current_user: Auth.User = Depends(Auth.get_current_user),
+    # current_user: Auth.User = Depends(Auth.get_current_user),
 ):
     # Parse the JSON request body
     sensor_data_request = await request.json()
@@ -248,9 +249,106 @@ async def get_all_mac_ids():
             pg_pool.putconn(conn)
 
     
+@app.get("/average_daily/")
+async def get_average_pm_values():
+    global pg_pool
+
+    try:
+        # Get a connection from the pool
+        conn = pg_pool.getconn()
+        cursor = conn.cursor()
+
+        # Find the latest timestamp
+        cursor.execute("SELECT MAX(ts) FROM alldata;")
+        latest_timestamp = cursor.fetchone()[0]
+        latest_timestamp = float(latest_timestamp)
+        # latest_timestamp = datetime.datetime.now()
+
+        # Calculate the timestamp of 24 hours before the latest timestamp
+        twenty_four_hours_ago = latest_timestamp - timedelta(hours=24).total_seconds()
+
+        # Query to calculate the average of "pm2_5" and "pm10_0" values between the two timestamps
+        cursor.execute(f"""
+            SELECT AVG(pm2_5), AVG(pm10_0)
+            FROM alldata
+            WHERE ts >= {twenty_four_hours_ago} AND ts <= {latest_timestamp};
+        """)
+
+        # Fetch the result
+        average_pm_values = cursor.fetchone()
+
+        if average_pm_values:
+            pm2_5_avg, pm10_0_avg = average_pm_values
+            return {
+                "pm2_5_avg": pm2_5_avg,
+                "pm10_0_avg": pm10_0_avg
+            }
+        else:
+            return {
+                "pm2_5_avg": None,
+                "pm10_0_avg": None
+            }
+
+    except psycopg2.Error as e:
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+
+    finally:
+        # Return the connection to the pool (do not close it)
+        if cursor:
+            cursor.close()
+        if conn:
+            pg_pool.putconn(conn)
 
 
+@app.get("/average_weekly/")
+async def get_average_pm_values():
+    global pg_pool
 
+    try:
+        # Get a connection from the pool
+        conn = pg_pool.getconn()
+        cursor = conn.cursor()
+
+        # Find the latest timestamp
+        cursor.execute("SELECT MAX(ts) FROM alldata;")
+        latest_timestamp = cursor.fetchone()[0]
+        latest_timestamp = float(latest_timestamp)
+        # latest_timestamp = datetime.datetime.now()
+
+        # Calculate the timestamp of 24 hours before the latest timestamp
+        twenty_four_hours_ago = latest_timestamp - timedelta(hours=168).total_seconds()
+
+        # Query to calculate the average of "pm2_5" and "pm10_0" values between the two timestamps
+        cursor.execute(f"""
+            SELECT AVG(pm2_5), AVG(pm10_0)
+            FROM alldata
+            WHERE ts >= {twenty_four_hours_ago} AND ts <= {latest_timestamp};
+        """)
+
+        # Fetch the result
+        average_pm_values = cursor.fetchone()
+
+        if average_pm_values:
+            pm2_5_avg, pm10_0_avg = average_pm_values
+            return {
+                "pm2_5_avg": pm2_5_avg,
+                "pm10_0_avg": pm10_0_avg
+            }
+        else:
+            return {
+                "pm2_5_avg": None,
+                "pm10_0_avg": None
+            }
+
+    except psycopg2.Error as e:
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+
+    finally:
+        # Return the connection to the pool (do not close it)
+        if cursor:
+            cursor.close()
+        if conn:
+            pg_pool.putconn(conn)
 # Run the application
 if __name__ == "__main__":
     import uvicorn
