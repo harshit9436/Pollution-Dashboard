@@ -5,6 +5,8 @@ from fastapi.security import (
     OAuth2PasswordRequestForm,
     SecurityScopes,
 )
+from fastapi.middleware.cors import CORSMiddleware
+
 import json
 from pydantic import BaseModel
 from datetime import timedelta,datetime
@@ -12,11 +14,27 @@ from datetime import timedelta,datetime
 import Utils.Utils as Utils
 from datetime import timedelta
 import Utils.Auth as Auth
-from typing import Annotated
+from typing import Annotated, List, Dict
 import Utils.MongoDb as mongo
 import asyncio
 
 app = FastAPI()
+
+origins = [
+    "http://localhost.tiangolo.com",
+    "https://localhost.tiangolo.com",
+    "http://localhost",
+    "http://localhost:3000",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 # Define a global variable for the PostgreSQL connection pool
 pg_pool = None
@@ -209,8 +227,12 @@ async def get_sensor_data_from_body(
 @app.get("/list/sensors")
 async def get_all_mac_ids():
     query = """
-            SELECT DISTINCT macid FROM alldata;
-        """
+        SELECT DISTINCT ON (macid) macid, lat, long, ts
+        FROM alldata
+        ORDER BY macid, ts DESC;
+    """
+    # cursor.execute("SELECT MAX(ts) FROM alldata;")
+    # latest_timestamp = cursor.fetchone()[0]
 
     global pg_pool
     try:
@@ -221,20 +243,26 @@ async def get_all_mac_ids():
         # Execute the query
         cursor.execute(query)
 
-        # Get the column names from the cursor description
-        column_names = [desc[0] for desc in cursor.description]
-
         # Fetch all rows of the result set
         rows = cursor.fetchall()
 
-        # Create a list of dictionaries with string values
+        # Create a list of dictionaries with MAC ID, latitude, and longitude
         data = []
-        for row in rows:
-            row_dict = {column_names[i]: str(row[i]) for i in range(len(column_names))}
-            print(type(row_dict))
-            data.append(row_dict.get("macid"))
 
-        return {"mac_id" : data}
+        max_ts =-1
+        for row in rows:
+            max_ts = max(max_ts, int(row[3]))
+
+        for row in rows:
+            mac_id, lat, long, ts = row
+            ts_old = max_ts - 24 * 60 * 60 # hueristic for active sensors
+            is_active = (ts>=ts_old and ts<=max_ts)
+            if(lat==0 or long==0):
+                is_active = False
+            data.append({"macid": str(mac_id), "lat": float(lat), "long": float(long), "is_active" : is_active })
+        
+        return data
+
 
     except psycopg2.Error as e:
         print("Error: Unable to connect to the database.")
@@ -247,7 +275,6 @@ async def get_all_mac_ids():
             cursor.close()
         if conn:
             pg_pool.putconn(conn)
-
     
 @app.get("/average_daily/")
 async def get_average_pm_values():
@@ -350,6 +377,76 @@ async def get_average_pm_values():
         if conn:
             pg_pool.putconn(conn)
 # Run the application
+def fetch_sensor_data_from_database(active_sensors):
+    connection = None
+    sensor_data = []
+
+    try:
+        # Get a connection from the pool
+        connection = pg_pool.getconn()
+
+        # Create a cursor object to interact with the database
+        cursor = connection.cursor()
+
+        cursor.execute("SELECT MAX(ts) FROM alldata;")
+        end_timestamp = cursor.fetchone()[0]
+        start_timestamp = end_timestamp - 3600
+
+        # Define the SQL query to retrieve sensor data for active sensors and the specified time range
+        query = """
+            SELECT macid, AVG(long) as long, AVG(lat) as lat, MAX(ts) as ts, AVG(pm2_5) as avg
+            FROM alldata
+            WHERE ts >= %s AND ts <= %s AND macid = ANY(%s)
+            GROUP BY macid;
+        """
+
+        # Execute the SQL query with parameters
+        cursor.execute(query, (start_timestamp, end_timestamp, active_sensors))
+
+        # Fetch all rows of the result set
+        rows = cursor.fetchall()
+
+        # Create a list of dictionaries containing sensor data
+        for row in rows:
+            macid, long, lat, ts, avg = row
+            sensor_data.append({"macid": macid, "long": long, "lat": lat, "ts": ts, "avg": float(avg)})
+
+        # Commit the transaction
+        connection.commit()
+
+    except psycopg2.Error as e:
+        # Handle database errors
+        raise HTTPException(status_code=500, detail="Database Error")
+
+    finally:
+        # Return the connection to the pool (do not close it)
+        if cursor:
+            cursor.close()
+        if connection:
+            pg_pool.putconn(connection)
+
+    return sensor_data
+
+@app.get("/average_pm25_last_hour/")
+async def get_average_pm25_last_hour(request: Request):
+    # Get the list of active sensors from the request body
+
+    body = await request.json()
+    active_sensors: List[str] =body.get("mac_id",[])
+    # Calculate timestamps for the last hour
+    # end_timestamp = int(datetime.timestamp(datetime.now()))
+    # cursor.execute("SELECT MAX(ts) FROM alldata;")
+    # latest_timestamp = cursor.fetchone()[0]
+    print(active_sensors)
+
+
+    # start_timestamp = end_timestamp - 3600  # 3600 seconds = 1 hour
+
+    # Fetch sensor data from the database for active sensors and the last hour
+    sensor_data = fetch_sensor_data_from_database(active_sensors)
+
+    return sensor_data
+
 if __name__ == "__main__":
     import uvicorn
 
