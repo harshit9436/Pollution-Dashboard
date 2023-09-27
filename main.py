@@ -449,5 +449,4 @@ async def get_average_pm25_last_hour(request: Request):
 
 if __name__ == "__main__":
     import uvicorn
-        
     uvicorn.run(app, host="0.0.0.0", port=8000)
