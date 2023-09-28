@@ -280,7 +280,7 @@ async def get_all_mac_ids():
             is_active = (ts>=ts_old and ts<=max_ts)
             if(lat==0 or long==0):
                 is_active = False
-            data.append({"macid": str(mac_id), "lat": float(lat), "long": float(long), "is_active" : is_active, "avg2_5" : float(avg2_5), "avg10_0" : float(avg10_0) })
+            data.append({"macid": str(mac_id), "lat": float(lat), "long": float(long), "is_active" : is_active, "avg2_5" : float(avg2_5), "avg10_0" : float(avg10_0) ,"ts": int(ts) })
         
         return data
 
