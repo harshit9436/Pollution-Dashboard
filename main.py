@@ -226,11 +226,18 @@ async def get_sensor_data_from_body(
 
 @app.get("/list/sensors")
 async def get_all_mac_ids():
-    query = """
-        SELECT DISTINCT ON (macid) macid, lat, long, ts
-        FROM alldata
-        ORDER BY macid, ts DESC;
-    """
+    # query = """
+    #     With temp(mc_id, avg2_5, avg10_0) as(
+    #         SELECT macid, AVG(pm2_5), AVG(pm10_0)
+    #         FROM alldata
+    #         WHERE ts >= {twenty_four_hours_ago} AND ts <= {latest_timestamp}
+    #         group by macid
+    #     )
+    #     SELECT DISTINCT ON (macid) macid, lat, long, ts, avg2_5, avg10_0
+    #     FROM alldata, temp
+    #     where macid=mc_id
+    #     ORDER BY macid, ts DESC;
+    # """
     # cursor.execute("SELECT MAX(ts) FROM alldata;")
     # latest_timestamp = cursor.fetchone()[0]
 
@@ -239,9 +246,23 @@ async def get_all_mac_ids():
         # Get a connection from the pool
         conn = pg_pool.getconn()
         cursor = conn.cursor()
+        cursor.execute("SELECT MAX(ts) FROM alldata;")
+        latest_timestamp = cursor.fetchone()[0]
+        latest_timestamp = float(latest_timestamp)
+        twenty_four_hours = latest_timestamp - timedelta(hours=24).total_seconds()
 
-        # Execute the query
-        cursor.execute(query)
+        cursor.execute(f"""
+            With temp(mc_id, avg2_5, avg10_0) as(
+                SELECT macid, AVG(pm2_5), AVG(pm10_0)
+                FROM alldata
+                WHERE ts >= {twenty_four_hours} AND ts <= {latest_timestamp}
+                group by macid
+            )
+            SELECT DISTINCT ON (macid) macid, lat, long, ts, avg2_5, avg10_0
+            FROM alldata, temp
+            where macid=mc_id
+            ORDER BY macid, ts DESC;
+        """)
 
         # Fetch all rows of the result set
         rows = cursor.fetchall()
@@ -254,12 +275,12 @@ async def get_all_mac_ids():
             max_ts = max(max_ts, int(row[3]))
 
         for row in rows:
-            mac_id, lat, long, ts = row
+            mac_id, lat, long, ts, avg2_5, avg10_0 = row
             ts_old = max_ts - 24 * 60 * 60 # hueristic for active sensors
             is_active = (ts>=ts_old and ts<=max_ts)
             if(lat==0 or long==0):
                 is_active = False
-            data.append({"macid": str(mac_id), "lat": float(lat), "long": float(long), "is_active" : is_active })
+            data.append({"macid": str(mac_id), "lat": float(lat), "long": float(long), "is_active" : is_active, "avg2_5" : float(avg2_5), "avg10_0" : float(avg10_0) })
         
         return data
 
