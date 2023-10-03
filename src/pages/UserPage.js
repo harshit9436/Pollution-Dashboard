@@ -34,10 +34,10 @@ import USERLIST from '../_mock/user';
 // ----------------------------------------------------------------------
 
 const TABLE_HEAD = [
-  { id: 'name', label: 'Name', alignRight: false },
-  { id: 'company', label: 'Company', alignRight: false },
-  { id: 'role', label: 'Role', alignRight: false },
-  { id: 'isVerified', label: 'Verified', alignRight: false },
+  { id: 'name', label: 'MAC ID', alignRight: false },
+  { id: 'company', label: 'Latitude', alignRight: false },
+  { id: 'role', label: 'Longitude', alignRight: false },
+  { id: 'isVerified', label: 'Last Time', alignRight: false },
   { id: 'status', label: 'Status', alignRight: false },
   { id: '' },
 ];
@@ -74,6 +74,7 @@ function applySortFilter(array, comparator, query) {
 }
 
 export default function UserPage() {
+
   const [open, setOpen] = useState(null);
 
   const [page, setPage] = useState(0);
@@ -149,16 +150,16 @@ export default function UserPage() {
   return (
     <>
       <Helmet>
-        <title> User | Minimal UI </title>
+        <title> Sensors </title>
       </Helmet>
 
       <Container>
         <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
           <Typography variant="h4" gutterBottom>
-            User
+            Sensors
           </Typography>
           <Button variant="contained" startIcon={<Iconify icon="eva:plus-fill" />}>
-            New User
+            New Sensor
           </Button>
         </Stack>
 

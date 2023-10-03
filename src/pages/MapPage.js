@@ -1,8 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect,useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import L from 'leaflet';
 import axios from 'axios';
+import SimplCard from '../components/card/SimpleCard.js';
+// import Button from '@mui/material/Button';
+import Fab from '@mui/material/Fab';
+import { Divider } from '@mui/material';
 
 const activeIconStyle = {
   iconUrl: '/assets/icons/green.svg',
@@ -47,6 +51,18 @@ const styles = {
 };
 
 export default function App() {
+  const [selectedImageIndex, setSelectedImageIndex] = useState(null);
+  
+  const myComponentRef=useRef(null);  
+  const scrollToComponent = () => {
+    if (myComponentRef.current) {
+      myComponentRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+  const handleIconClick = (index) => {
+    setSelectedImageIndex(index);
+    scrollToComponent();
+  };
   const [markersData, setMarkersData] = useState([]);
   const [lastRefreshTime, setLastRefreshTime] = useState(new Date());
   useEffect(() => {
@@ -117,12 +133,26 @@ export default function App() {
           <MarkerClusterGroup chunkedLoading iconCreateFunction={createClusterCustomIcon}>
             {markersData.map((marker, index) => (
               <Marker key={index} position={marker.geocode} icon={marker.icon}>
-                <Popup>{marker.popUp}</Popup>
+                <Popup>
+                  <div>
+                    {marker.popUp}
+                  </div>
+                  <Divider></Divider>
+                  {/* <Button variant="contained" onClick={()=>setSelectedImageIndex(index)}>Contained</Button> */}
+                  <Fab variant="extended" size="medium" color="primary" onClick={()=>handleIconClick(index)}>
+                    Show
+                  </Fab>
+                </Popup>
               </Marker>
             ))}
           </MarkerClusterGroup>
         </MapContainer>
       </div>
+      {selectedImageIndex !== null && (
+        <div ref={myComponentRef}>
+          <SimplCard></SimplCard>
+        </div>
+      )}
     </div>
   );
 }
