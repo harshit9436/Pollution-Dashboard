@@ -224,22 +224,8 @@ async def get_sensor_data_from_body(
     # print(result_data)
     return result_data
 
-@app.get("/list/sensors")
+@app.get("/list/sensors_nonstatic/")
 async def get_all_mac_ids():
-    # query = """
-    #     With temp(mc_id, avg2_5, avg10_0) as(
-    #         SELECT macid, AVG(pm2_5), AVG(pm10_0)
-    #         FROM alldata
-    #         WHERE ts >= {twenty_four_hours_ago} AND ts <= {latest_timestamp}
-    #         group by macid
-    #     )
-    #     SELECT DISTINCT ON (macid) macid, lat, long, ts, avg2_5, avg10_0
-    #     FROM alldata, temp
-    #     where macid=mc_id
-    #     ORDER BY macid, ts DESC;
-    # """
-    # cursor.execute("SELECT MAX(ts) FROM alldata;")
-    # latest_timestamp = cursor.fetchone()[0]
 
     global pg_pool
     try:
@@ -255,13 +241,18 @@ async def get_all_mac_ids():
             With temp(mc_id, avg2_5, avg10_0) as(
                 SELECT macid, AVG(pm2_5), AVG(pm10_0)
                 FROM alldata
-                WHERE ts >= {twenty_four_hours} AND ts <= {latest_timestamp}
+                WHERE tz>0 and ts >= {twenty_four_hours} AND ts <= {latest_timestamp}
                 group by macid
-            )
-            SELECT DISTINCT ON (macid) macid, lat, long, ts, avg2_5, avg10_0
-            FROM alldata, temp
-            where macid=mc_id
-            ORDER BY macid, ts DESC;
+                ),
+                temp2(macid, lat, long, ts) as (
+                SELECT DISTINCT ON (macid) macid, lat, long, ts
+                FROM alldata
+                where tz>0
+                ORDER BY macid, ts DESC
+                )
+            SELECT DISTINCT t2.macid, t2.lat, t2.long, t2.ts, t1.avg2_5, t1.avg10_0
+            FROM temp2 t2
+            LEFT JOIN temp t1 ON t2.macid = t1.mc_id;
         """)
 
         # Fetch all rows of the result set
@@ -276,12 +267,98 @@ async def get_all_mac_ids():
 
         for row in rows:
             mac_id, lat, long, ts, avg2_5, avg10_0 = row
+            # mac_id, lat, long, ts = row
             ts_old = max_ts - 24 * 60 * 60 # hueristic for active sensors
             is_active = (ts>=ts_old and ts<=max_ts)
             if(lat==0 or long==0):
                 is_active = False
-            data.append({"macid": str(mac_id), "lat": float(lat), "long": float(long), "is_active" : is_active, "avg2_5" : float(avg2_5), "avg10_0" : float(avg10_0) ,"ts": int(ts) })
+            # data.append({"macid": str(mac_id), "lat": float(lat), "long": float(long), "is_active" : is_active, "avg2_5" : float(avg2_5), "avg10_0" : float(avg10_0) })
+            # data.append({"macid": str(mac_id), "lat": float(lat), "long": float(long), "is_active" : is_active })
+            data.append({
+                "macid": str(mac_id),
+                "lat": float(lat),
+                "long": float(long),
+                "is_active": is_active,
+                "avg2_5": float(avg2_5) if avg2_5 is not None else 0.0,
+                "avg10_0": float(avg10_0) if avg10_0 is not None else 0.0,
+                "is_static": False
+            })
         
+        return data
+
+
+    except psycopg2.Error as e:
+        print("Error: Unable to connect to the database.")
+        print(e)
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+
+    finally:
+        # Close the cursor and return the connection to the pool
+        if cursor:
+            cursor.close()
+        if conn:
+            pg_pool.putconn(conn)
+
+@app.get("/list/sensors_static/")
+async def get_all_static_mac_ids():
+
+    global pg_pool
+    try:
+        # Get a connection from the pool
+        conn = pg_pool.getconn()
+        cursor = conn.cursor()
+        cursor.execute("SELECT MAX(ts) FROM alldata;")
+        latest_timestamp = cursor.fetchone()[0]
+        latest_timestamp = float(latest_timestamp)
+        twenty_four_hours = latest_timestamp - timedelta(hours=24).total_seconds()
+
+        cursor.execute(f"""
+            With temp(mc_id, avg2_5, avg10_0) as(
+                SELECT macid, AVG(pm2_5), AVG(pm10_0)
+                FROM alldata
+                WHERE tz=0 and ts >= {twenty_four_hours} AND ts <= {latest_timestamp}
+                group by macid
+                ),
+                temp2(macid, lat, long, ts) as (
+                SELECT DISTINCT ON (macid) macid, lat, long, ts
+                FROM alldata
+                where tz=0
+                ORDER BY macid, ts DESC
+                )
+            SELECT DISTINCT t2.macid, t2.lat, t2.long, t2.ts, t1.avg2_5, t1.avg10_0
+            FROM temp2 t2
+            LEFT JOIN temp t1 ON t2.macid = t1.mc_id;
+        """)
+
+        # Fetch all rows of the result set
+        rows = cursor.fetchall()
+
+        # Create a list of dictionaries with MAC ID, latitude, and longitude
+        data = []
+
+        max_ts =-1
+        for row in rows:
+            max_ts = max(max_ts, int(row[3]))
+
+        for row in rows:
+            mac_id, lat, long, ts, avg2_5, avg10_0 = row
+            # mac_id, lat, long, ts = row
+            ts_old = max_ts - 24 * 60 * 60 # hueristic for active sensors
+            is_active = (ts>=ts_old and ts<=max_ts)
+            if(lat==0 or long==0):
+                is_active = False
+            # data.append({"macid": str(mac_id), "lat": float(lat), "long": float(long), "is_active" : is_active, "avg2_5" : float(avg2_5), "avg10_0" : float(avg10_0) })
+            # data.append({"macid": str(mac_id), "lat": float(lat), "long": float(long), "is_active" : is_active })
+            data.append({
+                "macid": str(mac_id),
+                "lat": float(lat),
+                "long": float(long),
+                "is_active": is_active,
+                "avg2_5": float(avg2_5) if avg2_5 is not None else 0.0,
+                "avg10_0": float(avg10_0) if avg10_0 is not None else 0.0,
+                "is_static": True
+            })
+        # print(len(data))
         return data
 
 
