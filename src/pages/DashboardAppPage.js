@@ -1,87 +1,117 @@
 import { Helmet } from 'react-helmet-async';
 import { faker } from '@faker-js/faker';
-// @mui
+// @muiimport { Helmet } from 'react-helmet-async';
 import { useTheme } from '@mui/material/styles';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Grid, Container, Typography } from '@mui/material';
-// components
+import { LineChart } from '@mui/x-charts/LineChart';
+import { format } from 'date-fns';
+
 import Iconify from '../components/iconify';
-// sections
 import {
-  // AppTasks,
-  // AppNewsUpdate,
-  // AppOrderTimeline,
-  // AppCurrentVisits,
   AppWebsiteVisits,
-  // AppTrafficBySite,
   AppWidgetSummary,
-  // AppCurrentSubject,
-  // AppConversionRates,
   AppSensorMaps,
 } from '../sections/@dashboard/app';
 
-// ----------------------------------------------------------------------
-
 export default function DashboardAppPage() {
   const theme = useTheme();
-  // const [data,setData] = React.useState([])
-  // React.useEffect(()=> {
-  //   axios.get('URL?$(cvdshgcvdshg)',{headers}).then(response) => { setData(respo)}
-  // })
   const [data, setData] = useState([]);
+  const [wdata, setwData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [wloading, setwLoading] = useState(true);
+  const [chartData, setChartData] = useState([]);
+  const [chartLoading, setChartLoading] = useState(true);
+  const [pm2_5Data, setPm2_5Data] = useState([]); // Add pm2_5Data state
+  const [pm10_0Data, setPm10_0Data] = useState([]);
+  const [ts, set_ts] = useState([]);
 
   const fetchData = () => {
     axios.get('http://127.0.0.1:8000/average_daily/')
       .then(response => {
         setData(response.data);
-        console.log('The input data from API is');
-        console.log(data);
+        console.log('Today\'s data from API:', response.data);
         setLoading(false);
       })
       .catch(error => {
-        console.error('Error fetching data:', error);
+        console.error('Error fetching today\'s data:', error);
         setLoading(false);
       });
   };
-
-  const [wdata, setwData] = useState([]);
-  const [wloading, setwLoading] = useState(true);
 
   const fetchwData = () => {
     axios.get('http://127.0.0.1:8000/average_weekly/')
       .then(response => {
         setwData(response.data);
-        console.log('The input data from API is');
-        console.log(data);
+        console.log('Weekly data from API:', response.data);
         setwLoading(false);
       })
       .catch(error => {
-        console.error('Error fetching data:', error);
+        console.error('Error fetching weekly data:', error);
         setwLoading(false);
       });
   };
 
+  const fetchSensorData = async () => {
+    try {
+      const response = await axios.get('http://127.0.0.1:8000/dashboard/');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching sensor data:', error);
+      return null;
+    }
+  };
+
   useEffect(() => {
-    fetchData(); // Initial data fetch when component mounts
+    fetchData();
     fetchwData();
+    fetchSensorData().then(data => {
+      if (data) {
+        const pm2_5Data = data.map(point => parseFloat(point.pm2_5));
+        const pm10_0Data = data.map(point => parseFloat(point.pm10_0));
+        const formattedTimestamps = data.map(point => {
+          const unixTimestamp = parseInt(point.ts) * 1000; // Convert to milliseconds
+          const formattedDate = format(new Date(unixTimestamp), 'MM/dd/yyyy HH:mm:ss');
+          return formattedDate;
+        });
+        // const formattedTimestamps = data.map(point => {
+        // const dateStrings = data.map(point => String(point.ts)); // Assuming ts is in the format "DD/MM/YYYY"
+        // const formattedDate = format(new Date(dateString), 'dd/MM/yyyy');
+
+        // const dates = dateStrings.map(dateString => {
+        // const [day, month, year] = dateString.split('/').map(Number);
+        //   return new Date(year, month - 1, day);
+        // });        //   const formattedDate = format(new Date(unixTimestamp), 'MM/dd/yyyy HH:mm:ss');
+        //   return formattedDate;
+        // });
+
+        setPm2_5Data(pm2_5Data); // Set pm2_5Data state
+        setPm10_0Data(pm10_0Data); // Set pm2_5Data state
+        set_ts(formattedTimestamps);
+        const chartData = [
+          { data: pm2_5Data, label: 'PM2.5', yAxisKey: 'leftAxisId' },
+          { data: pm10_0Data, label: 'PM10.0', yAxisKey: 'rightAxisId' },
+        ];
+        console.log(pm2_5Data);
+        console.log(formattedTimestamps);
+        // const chartData = [
+        //   { data: pm2_5Data, label: 'PM2.5', yAxisKey: 'leftAxisId' },
+        //   { data: pm10_0Data, label: 'PM10.0', yAxisKey: 'rightAxisId' },
+        // ];
+
+        setChartData({ xLabels: formattedTimestamps, chartData });
+        setChartLoading(false);
+      }
+    });
   }, []);
 
-  // useEffect(() => {
-  //   fetchwData(); // Initial data fetch when component mounts
-  // }, []);
-
-  const handleReload = () => {
-    setLoading(true); // Set loading state before refetching
-    fetchData(); // Refetch data when the button is clicked
-  }
 
 
   return (
     <>
       <Helmet>
-        <title> Kolkata Pollution Board</title>
+        <title>Kolkata Pollution Board</title>
       </Helmet>
 
       <Container maxWidth="xl">
@@ -91,208 +121,114 @@ export default function DashboardAppPage() {
 
         <Grid container spacing={3}>
           <Grid item xs={12} sm={6} md={3}>
-            <AppWidgetSummary title="Today's PM2.5" total={data.pm2_5_avg} icon={'ant-design:android-filled'} />
+            <AppWidgetSummary
+              title="Today's PM2.5"
+              total={data.pm2_5_avg}
+              icon={'ant-design:android-filled'}
+            />
           </Grid>
 
           <Grid item xs={12} sm={6} md={3}>
-            <AppWidgetSummary title="Today's PM10" total={data.pm10_0_avg} color="info" icon={'ant-design:apple-filled'} />
+            <AppWidgetSummary
+              title="Today's PM10"
+              total={data.pm10_0_avg}
+              color="info"
+              icon={'ant-design:apple-filled'}
+            />
           </Grid>
 
           <Grid item xs={12} sm={6} md={3}>
-            <AppWidgetSummary title="Weekly PM2.5" total={wdata.pm2_5_avg} color="warning" icon={'ant-design:windows-filled'} />
+            <AppWidgetSummary
+              title="Weekly PM2.5"
+              total={wdata.pm2_5_avg}
+              color="warning"
+              icon={'ant-design:windows-filled'}
+            />
           </Grid>
 
           <Grid item xs={12} sm={6} md={3}>
-            <AppWidgetSummary title="Weekly PM10" total={wdata.pm10_0_avg} color="error" icon={'ant-design:bug-filled'} />
+            <AppWidgetSummary
+              title="Weekly PM10"
+              total={wdata.pm10_0_avg}
+              color="error"
+              icon={'ant-design:bug-filled'}
+            />
           </Grid>
 
-          <Grid item xs={12} md={6} lg={8}>
+
+
+        <Grid item xs={12} md={6} lg={8}>
             <AppWebsiteVisits
-              title="Website Visits"
-              subheader="(+43%) than last year"
-              chartLabels={[
-                '01/01/2003',
-                '02/01/2003',
-                '03/01/2003',
-                '04/01/2003',
-                '05/01/2003',
-                '06/01/2003',
-                '07/01/2003',
-                '08/01/2003',
-                '09/01/2003',
-                '10/01/2003',
-                '11/01/2003',
-              ]}
+              title="Average Sensor Data"
+              subheader=""
+              chartLabels={ts} // Convert and format dates
+
               chartData={[
                 {
-                  name: 'Team A',
-                  type: 'column',
-                  fill: 'solid',
-                  data: [23, 11, 22, 27, 13, 22, 37, 21, 44, 22, 30],
-                },
-                {
-                  name: 'Team B',
-                  type: 'area',
-                  fill: 'gradient',
-                  data: [44, 55, 41, 67, 22, 43, 21, 41, 56, 27, 43],
-                },
-                {
-                  name: 'Team C',
+                  name: 'PM2_5',
                   type: 'line',
                   fill: 'solid',
-                  data: [30, 25, 36, 30, 45, 35, 64, 52, 59, 36, 39],
+                  data: pm2_5Data,
                 },
-              ]}
-            />
-          </Grid>
-{/* 
-          <Grid item xs={12} md={6} lg={4}>
-            <AppCurrentVisits
-              title="Current Visits"
-              chartData={[
-                { label: 'America', value: 4344 },
-                { label: 'Asia', value: 5435 },
-                { label: 'Europe', value: 1443 },
-                { label: 'Africa', value: 4443 },
-              ]}
-              chartColors={[
-                theme.palette.primary.main,
-                theme.palette.info.main,
-                theme.palette.warning.main,
-                theme.palette.error.main,
-              ]}
-            />
-          </Grid> */}
-
-          {/* <Grid item xs={12} md={6} lg={8}>
-            <AppConversionRates
-              title="Conversion Rates"
-              subheader="(+43%) than last year"
-              chartData={[
-                { label: 'Italy', value: 400 },
-                { label: 'Japan', value: 430 },
-                { label: 'China', value: 448 },
-                { label: 'Canada', value: 470 },
-                { label: 'France', value: 540 },
-                { label: 'Germany', value: 580 },
-                { label: 'South Korea', value: 690 },
-                { label: 'Netherlands', value: 1100 },
-                { label: 'United States', value: 1200 },
-                { label: 'United Kingdom', value: 1380 },
+                {
+                  name: 'PM10_0',
+                  type: 'line',
+                  fill: 'solid',
+                  data: pm10_0Data,
+                },
+                // {
+                //   name: 'Team C',
+                //   type: 'line',
+                //   fill: 'solid',
+                //   data: [30, 25, 36, 30, 45, 35, 64, 52, 59, 36, 39],
+                // },
               ]}
             />
           </Grid>
 
-          <Grid item xs={12} md={6} lg={4}>
-            <AppCurrentSubject
-              title="Current Subject"
-              chartLabels={['English', 'History', 'Physics', 'Geography', 'Chinese', 'Math']}
-              chartData={[
-                { name: 'Series 1', data: [80, 50, 30, 40, 100, 20] },
-                { name: 'Series 2', data: [20, 30, 40, 80, 20, 80] },
-                { name: 'Series 3', data: [44, 76, 78, 13, 43, 10] },
-              ]}
-              chartColors={[...Array(6)].map(() => theme.palette.text.secondary)}
-            />
-          </Grid> */}
           <Grid item xs={12} md={6} lg={8}>
             <AppSensorMaps
               title="Sensor Maps"
               list={[
                 {
-                  id: 1, 
+                  id: 1,
                   title: 'NonStatic Sensors',
-                  description:'Position of the Active/Inactive Sensors',
+                  description:
+                    'Position of the Active/Inactive Sensors',
                   image: `/assets/images/covers/cover_2.jpg`,
-                  postedAt: faker.date.recent(), 
+                  postedAt: faker.date.recent(),
                   path: '/dashboard/maps',
                 },
                 {
-                  id: 2, 
+                  id: 2,
                   title: 'Static Sensors',
-                  description:'Tracks of mobi sensors crisscrossing the city in last one hour',
-                  image: `/assets/images/covers/cover_3.jpg`, 
+                  description:
+                    'Tracks of mobi sensors crisscrossing the city in last one hour',
+                  image: `/assets/images/covers/cover_3.jpg`,
                   postedAt: faker.date.recent(),
                   path: '/dashboard/mapstatic',
                 },
                 {
-                  id: 3, 
+                  id: 3,
                   title: 'Hourly PM 2.5',
-                  description:'Last hour average PM 2.5 sensorwise on map',
-                  image: `/assets/images/covers/cover_4.jpg`, 
+                  description:
+                    'Last hour average PM 2.5 sensorwise on map',
+                  image: `/assets/images/covers/cover_4.jpg`,
                   postedAt: faker.date.recent(),
                   path: '/dashboard/maps',
                 },
                 {
-                  id: 4, 
+                  id: 4,
                   title: 'PM2.5 Interpolation',
-                  description:' Interpolation of last hour average PM 2.5 over the entire deployment area',
-                  image: `/assets/images/covers/cover_5.jpg`, 
+                  description:
+                    ' Interpolation of last hour average PM 2.5 over the entire deployment area',
+                  image: `/assets/images/covers/cover_5.jpg`,
                   postedAt: faker.date.recent(),
                   path: '/dashboard/maps',
-                }
+                },
               ]}
             />
           </Grid>
-
-          {/* <Grid item xs={12} md={6} lg={4}>
-            <AppOrderTimeline
-              title="Order Timeline"
-              list={[...Array(5)].map((_, index) => ({
-                id: faker.datatype.uuid(),
-                title: [
-                  '1983, orders, $4220',
-                  '12 Invoices have been paid',
-                  'Order #37745 from September',
-                  'New order placed #XF-2356',
-                  'New order placed #XF-2346',
-                ][index],
-                type: `order${index + 1}`,
-                time: faker.date.past(),
-              }))}
-            />
-          </Grid>
-
-          <Grid item xs={12} md={6} lg={4}>
-            <AppTrafficBySite
-              title="Traffic by Site"
-              list={[
-                {
-                  name: 'FaceBook',
-                  value: 323234,
-                  icon: <Iconify icon={'eva:facebook-fill'} color="#1877F2" width={32} />,
-                },
-                {
-                  name: 'Google',
-                  value: 341212,
-                  icon: <Iconify icon={'eva:google-fill'} color="#DF3E30" width={32} />,
-                },
-                {
-                  name: 'Linkedin',
-                  value: 411213,
-                  icon: <Iconify icon={'eva:linkedin-fill'} color="#006097" width={32} />,
-                },
-                {
-                  name: 'Twitter',
-                  value: 443232,
-                  icon: <Iconify icon={'eva:twitter-fill'} color="#1C9CEA" width={32} />,
-                },
-              ]}
-            />
-          </Grid> */}
-{/* 
-          <Grid item xs={12} md={6} lg={8}>
-            <AppTasks
-              title="Tasks"
-              list={[
-                { id: '1', label: 'Create FireStone Logo' },
-                { id: '2', label: 'Add SCSS and JS files if required' },
-                { id: '3', label: 'Stakeholder Meeting' },
-                { id: '4', label: 'Scoping & Estimations' },
-                { id: '5', label: 'Sprint Showcase' },
-              ]}
-            />
-          </Grid> */}
         </Grid>
       </Container>
     </>
