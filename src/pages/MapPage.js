@@ -67,7 +67,7 @@ export default function App() {
   const [lastRefreshTime, setLastRefreshTime] = useState(new Date());
   useEffect(() => {
     // Define the URL of your backend API
-    const apiUrl = 'http://127.0.0.1:8000/list/sensors';
+    const apiUrl = 'http://127.0.0.1:8000/list/sensors_nonstatic/';
 
     // Use Axios to make a GET request to the API
     axios

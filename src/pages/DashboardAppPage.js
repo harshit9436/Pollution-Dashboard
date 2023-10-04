@@ -50,7 +50,7 @@ export default function DashboardAppPage() {
   const [wloading, setwLoading] = useState(true);
 
   const fetchwData = () => {
-    axios.get('http://127.0.0.1:8000/average_total/')
+    axios.get('http://127.0.0.1:8000/average_weekly/')
       .then(response => {
         setwData(response.data);
         console.log('The input data from API is');
@@ -201,7 +201,7 @@ export default function DashboardAppPage() {
               list={[
                 {
                   id: 1, 
-                  title: 'Active/Inactive Sensors',
+                  title: 'NonStatic Sensors',
                   description:'Position of the Active/Inactive Sensors',
                   image: `/assets/images/covers/cover_2.jpg`,
                   postedAt: faker.date.recent(), 
@@ -209,11 +209,11 @@ export default function DashboardAppPage() {
                 },
                 {
                   id: 2, 
-                  title: 'Mobile Sensors',
-                  description:'Tracks of mobile sensors crisscrossing the city in last one hour',
+                  title: 'Static Sensors',
+                  description:'Tracks of mobi sensors crisscrossing the city in last one hour',
                   image: `/assets/images/covers/cover_3.jpg`, 
                   postedAt: faker.date.recent(),
-                  path: '/dashboard/maps',
+                  path: '/dashboard/mapstatic',
                 },
                 {
                   id: 3, 

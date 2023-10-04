@@ -7,6 +7,7 @@ import BlogPage from './pages/BlogPage';
 import UserPage from './pages/UserPage';
 import LoginPage from './pages/LoginPage';
 import MapPage from './pages/MapPage';
+import MapStatic from './pages/MapStatic';
 import Page404 from './pages/Page404';
 import ProductsPage from './pages/ProductsPage';
 import DashboardAppPage from './pages/DashboardAppPage';
@@ -25,6 +26,7 @@ export default function Router() {
         { path: 'products', element: <ProductsPage /> },
         { path: 'blog', element: <BlogPage /> },
         { path: 'maps', element: <MapPage />, },
+        { path: 'mapstatic', element: <MapStatic/>, },
       ],
     },
     // { 
