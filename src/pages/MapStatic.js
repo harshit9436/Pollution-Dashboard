@@ -1,8 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import L from 'leaflet';
 import axios from 'axios';
+import SimplCard from '../components/card/SimpleCard.js';
+import Fab from '@mui/material/Fab';
+import { Divider } from '@mui/material';
 
 // Define icon styles for different ranges of avg2_5
 const iconStyles = {
@@ -67,6 +70,17 @@ const styles = {
   
 
 export default function App() {
+  const [selectedImageIndex, setSelectedImageIndex] = useState(null);
+  const myComponentRef=useRef(null);  
+  const scrollToComponent = () => {
+    if (myComponentRef.current) {
+      myComponentRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+  const handleIconClick = (index) => {
+    setSelectedImageIndex(index);
+    scrollToComponent();
+  };
   const [markersData, setMarkersData] = useState([]);
   const [lastRefreshTime, setLastRefreshTime] = useState(new Date());
 
@@ -105,6 +119,7 @@ export default function App() {
 
             return {
               geocode: [data.lat, data.long],
+              macid:data.macid,
               popUp: `MAC ID: ${data.macid}\n Avg 2.5: ${data.avg2_5.toFixed(2)}\nAvg 10.0: ${data.avg10_0.toFixed(2)}`,
               icon: L.icon(iconStyle),
             };
@@ -115,16 +130,15 @@ export default function App() {
       .catch((error) => {
         console.error('Error fetching markers:', error);
       });
-
-    // Set up an interval to refresh the page every 15 seconds
-    const refreshInterval = setInterval(() => {
-      setLastRefreshTime(new Date());
-      window.location.reload(); // Reload the page
-    }, 900000);
-
-    // Clean up the interval when the component unmounts
-    return () => clearInterval(refreshInterval);
-  }, []);
+      const refreshInterval = setInterval(() => {
+        setLastRefreshTime(new Date());
+        setLastRefreshTime(new Date());
+        window.location.reload(); // Reload the page
+      }, 900000);
+  
+      // Clean up the interval when the component unmounts
+      return () => clearInterval(refreshInterval);
+    }, []);
 
   const createClusterCustomIcon = function (cluster) {
     return L.divIcon({
@@ -154,12 +168,28 @@ export default function App() {
           <MarkerClusterGroup chunkedLoading iconCreateFunction={createClusterCustomIcon}>
             {markersData.map((marker, index) => (
               <Marker key={index} position={marker.geocode} icon={marker.icon}>
-                <Popup>{marker.popUp}</Popup>
+                <Popup>
+                  <div>{marker.popUp}</div>
+                  <Divider></Divider>
+                  <Fab variant="extended" size="medium" color="primary" onClick={()=>handleIconClick(marker.macid)}>
+                    Show Details
+                  </Fab>
+                </Popup>
+
               </Marker>
             ))}
           </MarkerClusterGroup>
         </MapContainer>
       </div>
+      {selectedImageIndex !== null && (
+        <div ref={myComponentRef}>
+          <SimplCard style={{ marginTop: '20px' }}
+          title='Sensor Plot'
+          subheader="Last 7 days"
+          macid={selectedImageIndex}
+          />
+        </div>
+      )}
     </div>
   );
 }

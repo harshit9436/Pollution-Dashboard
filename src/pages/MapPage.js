@@ -150,7 +150,9 @@ export default function App() {
       </div>
       {selectedImageIndex !== null && (
         <div ref={myComponentRef}>
-          <SimplCard></SimplCard>
+          <SimplCard>
+
+          </SimplCard>
         </div>
       )}
     </div>
