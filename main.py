@@ -114,22 +114,34 @@ async def get_sensor_data(mac_id: str,
                     # current_user: Auth.User = Depends(Auth.get_current_user), 
                 offset: str = "7"):
     # Calculate timestamps
-    ts_curr = Utils.currentUnixTS()
-    ts_old = Utils.offsetUnixTS(offset=int(offset))
+    # ts_curr = Utils.currentUnixTS()
+    
 
     # Build the SQL query with the table name included
-    query = f"""
-        SELECT * FROM alldata
-        WHERE macid = '{mac_id}' -- AND ts >= {ts_old} AND ts <= {ts_curr}
-        ORDER BY ts limit 50;
-    """
+    
     global pg_pool
     try:
         # Get a connection from the pool
         conn = pg_pool.getconn()
         cursor = conn.cursor()
+        cursor.execute("SELECT MAX(ts) FROM alldata;")
+        ts_curr = cursor.fetchone()[0]
+        ts_old = ts_curr - 24*60*60*(int(offset))
 
-        # Execute the query
+        query = f"""
+        SELECT pm2_5, pm4_0, ts FROM alldata
+        WHERE macid = '{mac_id}'  AND ts >= {ts_old} AND ts <= {ts_curr}
+        ORDER BY ts;
+            """    
+
+        # query = """with temp(pm2_5,pm_10,dayno) as
+        #     (select pm2_5,pm_10, ts
+        #     from alldata
+        #     )
+        # select dayno,avg(pm2_5), avg(10_0)
+        # from temp
+        # group by dayno;"""
+        # Execute the query 
         cursor.execute(query)
 
         # Get the column names from the cursor description
@@ -157,6 +169,84 @@ async def get_sensor_data(mac_id: str,
             cursor.close()
         if conn:
             pg_pool.putconn(conn)
+
+
+@app.get("/dashboard/")
+async def get_dashboard():
+    # Calculate timestamps
+    # ts_curr = Utils.currentUnixTS()
+    
+
+    # Build the SQL query with the table name included
+    
+    global pg_pool
+    try:
+        # Get a connection from the pool
+        conn = pg_pool.getconn()
+        cursor = conn.cursor()
+        cursor.execute("SELECT MAX(ts) FROM alldata;")
+        ts_curr = cursor.fetchone()[0]
+        ts_old = ts_curr - 24*60*60*7
+
+        # query = f"""
+        # SELECT pm2_5, pm4_0, ts FROM alldata
+        # WHERE macid = '{mac_id}'  AND ts >= {ts_old} AND ts <= {ts_curr}
+        # ORDER BY ts;
+        #     """    
+
+        query = f"""with temp(pm2_5,pm_10,ts) as
+                (select pm2_5,pm10_0, TO_CHAR(TO_TIMESTAMP(ts), 'DD/MM/YYYY')
+                from alldata
+                where ts>{ts_old}
+                )
+            select ts,Round(avg(pm2_5),2) as pm2_5, Round(avg(pm_10),2) as pm10_0
+            from temp
+            group by ts
+            order by ts asc;
+        """
+        # Execute the query 
+        cursor.execute(query)
+
+        # Get the column names from the cursor description
+        column_names = [desc[0] for desc in cursor.description]
+
+        # Fetch all rows of the result set
+        rows = cursor.fetchall()
+
+        # Create a list of dictionaries with string values
+        data = []
+        for row in rows:
+            row_dict = {column_names[i]: str(row[i]) for i in range(len(column_names))}
+            print(row_dict)
+            # convert row_dict.ts to unix timestamp
+            # row_dict['unix_timestamp']=int(datetime(row_dict['ts'], f'%d/%m/%Y'))
+
+            # date_string = '22/03/2023'
+# Assuming the date format is DD/MM/YYYY
+            date_format = '%d/%m/%Y'
+
+            # Parse the date string into a datetime object
+            date_object = datetime.strptime(row_dict["ts"], date_format)
+
+            # Convert the datetime object to a Unix timestamp
+            row_dict["ts"] = date_object.timestamp()
+            print(row_dict)
+            data.append(row_dict)
+
+        return data
+
+    except psycopg2.Error as e:
+        print("Error: Unable to connect to the database.")
+        print(e)
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+
+    finally:
+        # Close the cursor and return the connection to the pool
+        if cursor:
+            cursor.close()
+        if conn:
+            pg_pool.putconn(conn)
+
 
 
 @app.get("/sensors/")
