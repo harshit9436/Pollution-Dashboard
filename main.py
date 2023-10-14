@@ -114,34 +114,22 @@ async def get_sensor_data(mac_id: str,
                     # current_user: Auth.User = Depends(Auth.get_current_user), 
                 offset: str = "7"):
     # Calculate timestamps
-    # ts_curr = Utils.currentUnixTS()
-    
+    ts_curr = Utils.currentUnixTS()
+    ts_old = Utils.offsetUnixTS(offset=int(offset))
 
     # Build the SQL query with the table name included
-    
+    query = f"""
+        SELECT * FROM alldata
+        WHERE macid = '{mac_id}' --AND ts >= {ts_old} AND ts <= {ts_curr}
+        ORDER BY ts limit 50;
+    """
     global pg_pool
     try:
         # Get a connection from the pool
         conn = pg_pool.getconn()
         cursor = conn.cursor()
-        cursor.execute("SELECT MAX(ts) FROM alldata;")
-        ts_curr = cursor.fetchone()[0]
-        ts_old = ts_curr - 24*60*60*(int(offset))
 
-        query = f"""
-        SELECT pm2_5, pm4_0, ts FROM alldata
-        WHERE macid = '{mac_id}'  AND ts >= {ts_old} AND ts <= {ts_curr}
-        ORDER BY ts;
-            """    
-
-        # query = """with temp(pm2_5,pm_10,dayno) as
-        #     (select pm2_5,pm_10, ts
-        #     from alldata
-        #     )
-        # select dayno,avg(pm2_5), avg(10_0)
-        # from temp
-        # group by dayno;"""
-        # Execute the query 
+        # Execute the query
         cursor.execute(query)
 
         # Get the column names from the cursor description
@@ -169,6 +157,7 @@ async def get_sensor_data(mac_id: str,
             cursor.close()
         if conn:
             pg_pool.putconn(conn)
+
 
 
 @app.get("/dashboard/")
@@ -634,6 +623,31 @@ async def get_average_pm25_last_hour(request: Request):
     sensor_data = fetch_sensor_data_from_database(active_sensors)
 
     return sensor_data
+
+@app.post("/test/", response_model=dict)
+async def authenticate(login_request: dict):
+    # Define the LoginRequest model within the function
+    print("we were here 1")
+    class LoginRequest(BaseModel):
+        email: str
+        password: str
+
+    # A dictionary to store the valid email and password
+    valid_credentials = {"riju@example.com": "riju"}
+
+    # Deserialize the request body using the LoginRequest model
+    login_data = LoginRequest(**login_request)
+
+    email = login_data.email
+    password = login_data.password
+
+    if email in valid_credentials and valid_credentials[email] == password:
+        print("we were here 2")
+        # Successful authentication
+        return {"token": "ccdshbh", "message": "Successful authentication"}
+    else:
+        # Authentication failed
+        raise HTTPException(status_code=401, detail="Login failed", headers={"WWW-Authenticate": "Bearer"})
 
 if __name__ == "__main__":
     import uvicorn
