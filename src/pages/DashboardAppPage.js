@@ -5,7 +5,7 @@ import { useTheme } from '@mui/material/styles';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Grid, Container, Typography } from '@mui/material';
-import { LineChart } from '@mui/x-charts/LineChart';
+import { LineChart } from '@mui/x-charts';
 import { format } from 'date-fns';
 
 import Iconify from '../components/iconify';

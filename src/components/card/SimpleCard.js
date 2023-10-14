@@ -5,6 +5,8 @@ import { Card, CardHeader, Box } from '@mui/material';
 import axios from 'axios';
 import { format } from 'date-fns';
 import { useChart } from '../../components/chart'; 
+import Papa from 'papaparse';
+import { CardActions, Button } from '@mui/material';
 
 
 SimpleCard.propTypes = {
@@ -29,6 +31,26 @@ export default function SimpleCard({ title, subheader, macid, ...other }) {
       return null;
     }
   };
+  const apiUrl = `http://127.0.0.1:8000/sensors/${encodedMacId}/?offset=7`;
+  const handleDownloadData = () => {
+    axios
+      .get(apiUrl)
+      .then((response) => {
+        const dataToDownload = response.data;
+        const csvData = Papa.unparse(dataToDownload);
+        const blob = new Blob([csvData], { type: 'text/csv' });
+        const blobUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = 'data.csv';
+        a.click();
+        window.URL.revokeObjectURL(blobUrl);
+      })
+      .catch((error) => {
+        console.error('Error fetching data:', error);
+      });
+  };
+
 
   useEffect(() => {
     fetchSensorData().then(data => {
@@ -58,8 +80,8 @@ export default function SimpleCard({ title, subheader, macid, ...other }) {
     },
     {
       name: 'PM 10',
-      type: 'line',
-      fill: 'solid',
+      type: 'area',
+      fill: 'gradient',
       data: pm10_0Data,
     },
   ];
@@ -90,6 +112,11 @@ export default function SimpleCard({ title, subheader, macid, ...other }) {
       <Box sx={{ p: 3, pb: 1 }} dir="ltr">
         <ReactApexChart type="line" series={chartData} options={chartOptions} height={364} />
       </Box>
+      <CardActions>
+        <Button size="small" onClick={handleDownloadData}>
+          Download Data
+        </Button>
+      </CardActions>
     </Card>
   );
 }
