@@ -52,16 +52,15 @@ const styles = {
 
 export default function App() {
   const [selectedImageIndex, setSelectedImageIndex] = useState(null);
-  // const [selectedMacid, setSelectedMacid] = useState(null);
+  
   const myComponentRef=useRef(null);  
   const scrollToComponent = () => {
     if (myComponentRef.current) {
       myComponentRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
-  const handleIconClick = (macid, index) => {
-    // setSelectedMacid(macid);
-    setSelectedImageIndex(macid);
+  const handleIconClick = (index) => {
+    setSelectedImageIndex(index);
     scrollToComponent();
   };
   const [markersData, setMarkersData] = useState([]);
@@ -79,8 +78,7 @@ export default function App() {
           .filter((data) => data.lat !== 0 && data.long !== 0) // Filter out data with lat or long equal to 0
           .map((data, index) => ({
             geocode: [data.lat, data.long],
-            macid:data.macid,
-            // popUp: data.is_active ? 'active' : 'Inactive',
+            // popUp: data.is_active ? data.avg2_5 : 'Inactive',
             popUp: `MAC ID: ${data.macid}\n Avg 2.5: ${data.avg2_5.toFixed(2)}\nAvg 10.0: ${data.avg10_0.toFixed(2)}`,
             icon: data.is_active ? L.icon(activeIconStyle) : L.icon(inactiveIconStyle),
           }));
@@ -141,7 +139,7 @@ export default function App() {
                   </div>
                   <Divider></Divider>
                   {/* <Button variant="contained" onClick={()=>setSelectedImageIndex(index)}>Contained</Button> */}
-                  <Fab variant="extended" size="medium" color="primary" onClick={()=>handleIconClick(marker.macid,index)}>
+                  <Fab variant="extended" size="medium" color="primary" onClick={()=>handleIconClick(index)}>
                     Show
                   </Fab>
                 </Popup>
@@ -152,7 +150,9 @@ export default function App() {
       </div>
       {selectedImageIndex !== null && (
         <div ref={myComponentRef}>
-          <SimplCard></SimplCard>
+          <SimplCard>
+
+          </SimplCard>
         </div>
       )}
     </div>
