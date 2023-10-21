@@ -4,25 +4,28 @@ import { Stack, IconButton, InputAdornment, TextField, Checkbox } from '@mui/mat
 import { LoadingButton } from '@mui/lab';
 import Iconify from '../../../components/iconify';
 
-export default function LoginForm() {
+export default function AdminForm() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [result, setResult] = useState('');
 
-  const handleLogin = async () => {
+  const handleAdmin = async () => {
     try {
       const formData = new FormData();
       formData.append('username', username);
+      formData.append('email', email);
       formData.append('password', password);
 
       // Send a request to your backend to obtain the JWT token
-      const response = await fetch('http://127.0.0.1:8000/token/', {
+      const response = await fetch('http://127.0.0.1:8000/add_admin/', {
         method: 'POST',
         body: formData,
       });
+      console.log(response.json());
 
       if (response.ok) {
         const data = await response.json();
@@ -30,7 +33,7 @@ export default function LoginForm() {
         console.log(data.access_token);
 
         // Store the JWT token in local storage or any other client-side storage mechanism
-        localStorage.setItem('jwtToken', jwtToken);
+        // localStorage.setItem('jwtToken', jwtToken);
 
         const url = 'http://127.0.0.1:8000/test_token/';  // Replace with your actual backend URL
 
@@ -59,7 +62,7 @@ export default function LoginForm() {
         navigate('/dashboard', { replace: true });
       } else {
         // Handle login error
-        setResult('Wrong username or password');
+        setResult('Wrong jwt');
       }
     } catch (error) {
       console.error('An error occurred while logging in', error);
@@ -74,6 +77,13 @@ export default function LoginForm() {
           label="Username"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
+        />
+
+        <TextField
+          name="email"
+          label="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
         />
 
         <TextField
@@ -107,8 +117,8 @@ export default function LoginForm() {
 
       {result && <p>{result}</p>}
 
-      <LoadingButton fullWidth size="large" variant="contained" onClick={handleLogin}>
-        Login
+      <LoadingButton fullWidth size="large" variant="contained" onClick={handleAdmin}>
+        Add
       </LoadingButton>
     </>
   );

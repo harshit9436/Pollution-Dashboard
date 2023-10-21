@@ -1,8 +1,8 @@
 // ----------------------------------------------------------------------
 
 const account = {
-  displayName: 'Jaydon Frankie',
-  email: 'demo@minimals.cc',
+  displayName: 'Pollution Team',
+  email: '',
   photoURL: '/assets/images/avatars/avatar_default.jpg',
 };
 

@@ -1,34 +1,43 @@
 // import { useState } from 'react';
-// // @mui
 // import { alpha } from '@mui/material/styles';
 // import { Box, Divider, Typography, Stack, MenuItem, Avatar, IconButton, Popover } from '@mui/material';
-// // mocks_
 // import account from '../../../_mock/account';
-
-// // ----------------------------------------------------------------------
 
 // const MENU_OPTIONS = [
 //   {
-//     label: 'Home',
+//     label: 'Add Admin',
 //     icon: 'eva:home-fill',
 //   },
-//   {
-//     label: 'Profile',
-//     icon: 'eva:person-fill',
-//   },
-//   {
-//     label: 'Settings',
-//     icon: 'eva:settings-2-fill',
-//   },
+//   // {
+//   //   label: 'Profile',
+//   //   icon: 'eva:person-fill',
+//   // },
+//   // {
+//   //   label: 'Settings',
+//   //   icon: 'eva:settings-2-fill',
+//   // },
 // ];
-
-// // ----------------------------------------------------------------------
 
 // export default function AccountPopover() {
 //   const [open, setOpen] = useState(null);
 
 //   const handleOpen = (event) => {
 //     setOpen(event.currentTarget);
+//   };
+
+//   const handleLogout = () => {
+//     // Clear the JWT token from local storage
+//     localStorage.removeItem('jwtToken');
+
+//     // Close the popover
+//     setOpen(null);
+
+//     // Show a "Logout successful" message
+//     alert('Logout successful');
+
+//     // Navigate to the dashboard
+//     // Replace '/dashboard' with the actual dashboard URL
+//     window.location.href = '/dashboard';
 //   };
 
 //   const handleClose = () => {
@@ -97,7 +106,7 @@
 
 //         <Divider sx={{ borderStyle: 'dashed' }} />
 
-//         <MenuItem onClick={handleClose} sx={{ m: 1 }}>
+//         <MenuItem onClick={handleLogout} sx={{ m: 1 }}>
 //           Logout
 //         </MenuItem>
 //       </Popover>
@@ -106,25 +115,25 @@
 // }
 
 
-
 import { useState } from 'react';
 import { alpha } from '@mui/material/styles';
 import { Box, Divider, Typography, Stack, MenuItem, Avatar, IconButton, Popover } from '@mui/material';
 import account from '../../../_mock/account';
-
+import { Link as RouterLink,useNavigate } from 'react-router-dom';
 const MENU_OPTIONS = [
   {
-    label: 'Home',
+    label: 'Add Admin',
+    
     icon: 'eva:home-fill',
   },
-  {
-    label: 'Profile',
-    icon: 'eva:person-fill',
-  },
-  {
-    label: 'Settings',
-    icon: 'eva:settings-2-fill',
-  },
+  // {
+  //   label: 'Profile',
+  //   icon: 'eva:person-fill',
+  // },
+  // {
+  //   label: 'Settings',
+  //   icon: 'eva:settings-2-fill',
+  // },
 ];
 
 export default function AccountPopover() {
@@ -133,6 +142,8 @@ export default function AccountPopover() {
   const handleOpen = (event) => {
     setOpen(event.currentTarget);
   };
+
+  const navigate = useNavigate();
 
   const handleLogout = () => {
     // Clear the JWT token from local storage
@@ -147,6 +158,23 @@ export default function AccountPopover() {
     // Navigate to the dashboard
     // Replace '/dashboard' with the actual dashboard URL
     window.location.href = '/dashboard';
+  };
+
+  const handleAddAdmin = () => {
+    // Fetch the JWT token from local storage
+    const jwtToken = localStorage.getItem('jwtToken');
+
+    // Check if JWT token is empty or null
+    if (!jwtToken) {
+      // Show a "Login required" message
+      alert('Login required');
+    } else {
+      // Navigate to the "Add Admin" page
+      navigate('/admin');
+    }
+    
+    // Close the popover
+    setOpen(null);
   };
 
   const handleClose = () => {
@@ -207,7 +235,7 @@ export default function AccountPopover() {
 
         <Stack sx={{ p: 1 }}>
           {MENU_OPTIONS.map((option) => (
-            <MenuItem key={option.label} onClick={handleClose}>
+            <MenuItem key={option.label} onClick={option.label === 'Add Admin' ? handleAddAdmin : handleClose}>
               {option.label}
             </MenuItem>
           ))}
@@ -222,3 +250,4 @@ export default function AccountPopover() {
     </>
   );
 }
+

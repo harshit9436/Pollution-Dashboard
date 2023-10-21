@@ -18,6 +18,37 @@ const inactiveIconStyle = {
   iconSize: [50, 50],
 };
 
+const iconStyles = {
+  '0-50': {
+    iconUrl: '/assets/icons/0-50.svg',
+    iconSize: [50, 50],
+  },
+  '50-100': {
+    iconUrl: '/assets/icons/50-100.svg',
+    iconSize: [50, 50],
+  },
+  '100-150': {
+    iconUrl: '/assets/icons/100-150.svg',
+    iconSize: [50, 50],
+  },
+  '150-200': {
+    iconUrl: '/assets/icons/150-200.svg',
+    iconSize: [50, 50],
+  },
+  '200-300': {
+    iconUrl: '/assets/icons/200-300.svg',
+    iconSize: [50, 50],
+  },
+  '300+': {
+    iconUrl: '/assets/icons/300+.svg',
+    iconSize: [50, 50],
+  },
+  inactive: {
+    iconUrl: '/assets/icons/inactive.svg',
+    iconSize: [50, 50],
+  },
+};
+
 const customIcon = L.icon(activeIconStyle);
 
 const styles = {
@@ -72,20 +103,40 @@ export default function App() {
     // Use Axios to make a GET request to the API
     axios
       .get(apiUrl)
-      .then((response) => {
+      .then((response) =>  {
         // Assuming the response data is an array of markers
         const formattedMarkers = response.data
-          .filter((data) => data.lat !== 0 && data.long !== 0) // Filter out data with lat or long equal to 0
-          .map((data, index) => ({
-            geocode: [data.lat, data.long],
-            // popUp: data.is_active ? data.avg2_5 : 'Inactive',
-            popUp: `MAC ID: ${data.macid}\n Avg 2.5: ${data.avg2_5.toFixed(2)}\nAvg 10.0: ${data.avg10_0.toFixed(2)}`,
-            icon: data.is_active ? L.icon(activeIconStyle) : L.icon(inactiveIconStyle),
-          }));
+          .filter((data) => data.lat !== 0 && data.long !== 0)
+          .map((data, index) => {
+            // Determine the icon style based on avg2_5 range
+            let iconStyle;
+            if (!data.is_active) {
+              // If inactive
+              iconStyle = iconStyles.inactive;
+            } else {
+              if (data.avg2_5 >= -1 && data.avg2_5 < 50) {
+                iconStyle = iconStyles['0-50'];
+              } else if (data.avg2_5 >= 50 && data.avg2_5 < 100) {
+                iconStyle = iconStyles['50-100'];
+              } else if (data.avg2_5 >= 100 && data.avg2_5 < 150) {
+                iconStyle = iconStyles['100-150'];
+              } else if (data.avg2_5 >= 150 && data.avg2_5 < 200) {
+                iconStyle = iconStyles['150-200'];
+              } else if (data.avg2_5 >= 200 && data.avg2_5 < 300) {
+                iconStyle = iconStyles['200-300'];
+              } else {
+                iconStyle = iconStyles['300+'];
+              }
+            }
 
-        // Set the formatted markers in the state
-        console.log('retrieved data');
-        console.log(formattedMarkers);
+            return {
+              geocode: [data.lat, data.long],
+              macid:data.macid,
+              popUp: `MAC ID: ${data.macid}\n Avg 2.5: ${data.avg2_5.toFixed(2)}\nAvg 10.0: ${data.avg10_0.toFixed(2)}`,
+              icon: L.icon(iconStyle),
+            };
+          });
+
         setMarkersData(formattedMarkers);
       })
       .catch((error) => {

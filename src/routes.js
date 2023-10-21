@@ -6,6 +6,7 @@ import SimpleLayout from './layouts/simple';
 import BlogPage from './pages/BlogPage';
 import UserPage from './pages/UserPage';
 import LoginPage from './pages/LoginPage';
+import AdminPage from './pages/AdminPage';
 import MapPage from './pages/MapPage';
 import MapStatic from './pages/MapStatic';
 import Page404 from './pages/Page404';
@@ -29,10 +30,10 @@ export default function Router() {
         { path: 'mapstatic', element: <MapStatic/>, },
       ],
     },
-    // { 
-    //   path: 'maps', 
-    //   element: <MapPage />, 
-    // },
+    { 
+      path: 'admin', 
+      element: <AdminPage />, 
+    },
     {
       path: 'login',
       element: <LoginPage />,

@@ -8,7 +8,7 @@ import useResponsive from '../hooks/useResponsive';
 import Logo from '../components/logo';
 import Iconify from '../components/iconify';
 // sections
-import { LoginForm } from '../sections/auth/login';
+import { AdminForm } from '../sections/auth/admin';
 
 // ----------------------------------------------------------------------
 
@@ -40,13 +40,13 @@ const StyledContent = styled('div')(({ theme }) => ({
 
 // ----------------------------------------------------------------------
 
-export default function LoginPage() {
+export default function AdminPage() {
   const mdUp = useResponsive('up', 'md');
 
   return (
     <>
       <Helmet>
-        <title> Login | Data </title>
+        <title> Admin | Add </title>
       </Helmet>
 
       <StyledRoot>
@@ -69,7 +69,7 @@ export default function LoginPage() {
         {mdUp && (
           <StyledSection>
             <Typography variant="h3" sx={{ px: 5, mt: 10, mb: 5 }}>
-              Hi, Welcome Back
+              Hi, Welcome Admin
             </Typography>
             <img src="/assets/illustrations/illustration_login.png" alt="login" />
           </StyledSection>
@@ -78,7 +78,7 @@ export default function LoginPage() {
         <Container maxWidth="sm">
           <StyledContent>
             <Typography variant="h4" gutterBottom>
-              Sign in to downlad data
+              Add new admin credentials
             </Typography>
 
             {/* <Typography variant="body2" sx={{ mb: 5 }}>
@@ -106,7 +106,7 @@ export default function LoginPage() {
               </Typography>
             </Divider>
 
-            <LoginForm />
+            <AdminForm />
           </StyledContent>
         </Container>
       </StyledRoot>

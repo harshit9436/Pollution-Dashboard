@@ -194,7 +194,7 @@ export default function DashboardAppPage() {
                   id: 1,
                   title: 'NonStatic Sensors',
                   description:
-                    'Position of the Active/Inactive Sensors',
+                    'Location and information of NonStatic sensor',
                   image: `/assets/images/covers/cover_2.jpg`,
                   postedAt: faker.date.recent(),
                   path: '/dashboard/maps',
@@ -203,7 +203,7 @@ export default function DashboardAppPage() {
                   id: 2,
                   title: 'Static Sensors',
                   description:
-                    'Tracks of mobi sensors crisscrossing the city in last one hour',
+                    'Location and information of Static sensor',
                   image: `/assets/images/covers/cover_3.jpg`,
                   postedAt: faker.date.recent(),
                   path: '/dashboard/mapstatic',

@@ -102,7 +102,7 @@ export default function App() {
               // If inactive
               iconStyle = iconStyles.inactive;
             } else {
-              if (data.avg2_5 >= 0 && data.avg2_5 < 50) {
+              if (data.avg2_5 >= -1 && data.avg2_5 < 50) {
                 iconStyle = iconStyles['0-50'];
               } else if (data.avg2_5 >= 50 && data.avg2_5 < 100) {
                 iconStyle = iconStyles['50-100'];
