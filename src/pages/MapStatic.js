@@ -86,7 +86,7 @@ export default function App() {
 
   useEffect(() => {
     // Define the URL of your backend API
-    const apiUrl = 'http://127.0.0.1:8000/list/sensors_static/';
+    const apiUrl = 'http://10.17.5.49:8000/list/sensors_static/';
 
     // Use Axios to make a GET request to the API
     axios

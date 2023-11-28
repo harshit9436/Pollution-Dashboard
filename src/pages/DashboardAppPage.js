@@ -28,7 +28,7 @@ export default function DashboardAppPage() {
   const [ts, set_ts] = useState([]);
 
   const fetchData = () => {
-    axios.get('http://127.0.0.1:8000/average_daily/')
+    axios.get('http://10.17.5.49:8000/average_daily/')
       .then(response => {
         setData(response.data);
         console.log('Today\'s data from API:', response.data);
@@ -41,7 +41,7 @@ export default function DashboardAppPage() {
   };
 
   const fetchwData = () => {
-    axios.get('http://127.0.0.1:8000/average_weekly/')
+    axios.get('http://10.17.5.49:8000/average_weekly/')
       .then(response => {
         setwData(response.data);
         console.log('Weekly data from API:', response.data);
@@ -55,7 +55,7 @@ export default function DashboardAppPage() {
 
   const fetchSensorData = async () => {
     try {
-      const response = await axios.get('http://127.0.0.1:8000/dashboard/');
+      const response = await axios.get('http://10.17.5.49:8000/dashboard/');
       return response.data;
     } catch (error) {
       console.error('Error fetching sensor data:', error);

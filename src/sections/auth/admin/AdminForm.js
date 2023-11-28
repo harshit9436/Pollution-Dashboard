@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { Stack, IconButton, InputAdornment, TextField, Checkbox } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
 import Iconify from '../../../components/iconify';
+import axios from 'axios';
 
 export default function AdminForm() {
   const navigate = useNavigate();
@@ -10,63 +11,48 @@ export default function AdminForm() {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
   const [result, setResult] = useState('');
 
   const handleAdmin = async () => {
+    const jwtToken = getToken();
+
+    if (!jwtToken) {
+      setResult('Login required');
+      return;
+    }
+
     try {
       const formData = new FormData();
       formData.append('username', username);
       formData.append('email', email);
       formData.append('password', password);
 
-      // Send a request to your backend to obtain the JWT token
-      const response = await fetch('http://127.0.0.1:8000/add_admin/', {
-        method: 'POST',
-        body: formData,
+      const response = await axios.post('http://10.17.5.49:8000/add_admin/', formData, {
+        headers: {
+          Authorization: `Bearer ${jwtToken}`,
+        },
       });
-      console.log(response.json());
 
-      if (response.ok) {
-        const data = await response.json();
-        const jwtToken = data.access_token;
-        console.log(data.access_token);
-
-        // Store the JWT token in local storage or any other client-side storage mechanism
-        // localStorage.setItem('jwtToken', jwtToken);
-
-        const url = 'http://127.0.0.1:8000/test_token/';  // Replace with your actual backend URL
-
-        fetch(url, {
-          method: 'GET',
-          headers: {
-            'Authorization': 'Bearer ' + localStorage.getItem('jwtToken'), // Add your JWT token here
-          },
-        })
-          .then(response2 => {
-            if (response2.ok) {
-              return response2.json();
-            } else {
-              throw new Error('Failed to fetch data');
-            }
-          })
-          .then(data2 => {
-            console.log(data2);
-            // Handle the response data here
-          })
-          .catch(error => {
-            console.error('Error:', error);
-          });
-
-        // Navigate to the dashboard
+      if (response.status === 200) {
+        setResult('Admin successfully added');
         navigate('/dashboard', { replace: true });
       } else {
-        // Handle login error
-        setResult('Wrong jwt');
+        // Check if the response contains error details
+        if (response.data && response.data.errors) {
+          // Display the error message received from the server
+          setResult(response.data.errors[0]);
+        } else {
+          setResult('Admin addition failed');
+        }
       }
     } catch (error) {
-      console.error('An error occurred while logging in', error);
+      console.error('An error occurred while adding admin', error);
+      setResult('Admin addition failed');
     }
+  };
+
+  const getToken = () => {
+    return localStorage.getItem('jwtToken');
   };
 
   return (
@@ -81,7 +67,7 @@ export default function AdminForm() {
 
         <TextField
           name="email"
-          label="email"
+          label="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
@@ -105,14 +91,8 @@ export default function AdminForm() {
       </Stack>
 
       <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ my: 2 }}>
-        <Checkbox
-          name="remember"
-          checked={rememberMe}
-          onChange={(e) => setRememberMe(e.target.checked)}
-        />
-        <RouterLink to="/dashboard">
-          Go to dashboard
-        </RouterLink>
+        <Checkbox name="remember" defaultChecked />
+        <RouterLink to="/dashboard">Go to dashboard</RouterLink>
       </Stack>
 
       {result && <p>{result}</p>}
@@ -123,4 +103,3 @@ export default function AdminForm() {
     </>
   );
 }
-

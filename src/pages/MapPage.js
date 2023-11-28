@@ -98,7 +98,7 @@ export default function App() {
   const [lastRefreshTime, setLastRefreshTime] = useState(new Date());
   useEffect(() => {
     // Define the URL of your backend API
-    const apiUrl = 'http://127.0.0.1:8000/list/sensors_nonstatic/';
+    const apiUrl = 'http://10.17.5.49:8000/list/sensors_nonstatic/';
 
     // Use Axios to make a GET request to the API
     axios
@@ -190,8 +190,8 @@ export default function App() {
                   </div>
                   <Divider></Divider>
                   {/* <Button variant="contained" onClick={()=>setSelectedImageIndex(index)}>Contained</Button> */}
-                  <Fab variant="extended" size="medium" color="primary" onClick={()=>handleIconClick(index)}>
-                    Show
+                  <Fab variant="extended" size="medium" color="primary" onClick={()=>handleIconClick(marker.macid)}>
+                    Show Details
                   </Fab>
                 </Popup>
               </Marker>
@@ -201,11 +201,14 @@ export default function App() {
       </div>
       {selectedImageIndex !== null && (
         <div ref={myComponentRef}>
-          <SimplCard>
-
-          </SimplCard>
+          <SimplCard style={{ marginTop: '20px' }}
+          title='Sensor Plot'
+          subheader="Last 7 days"
+          macid={selectedImageIndex}
+          />
         </div>
       )}
     </div>
   );
 }
+

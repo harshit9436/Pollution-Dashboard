@@ -22,7 +22,7 @@ export default function SimpleCard({ title, subheader, macid, ...other }) {
 
   const fetchSensorData = async () => {
     try {
-      const apiUrl = `http://127.0.0.1:8000/data/${encodedMacId}/?offset=7`;
+      const apiUrl = `http://10.17.5.49:8000/data/${encodedMacId}/?offset=7`;
       const response = await axios.get(apiUrl);
       return response.data;
     } catch (error) {
@@ -31,7 +31,7 @@ export default function SimpleCard({ title, subheader, macid, ...other }) {
     }
   };
 
-  const apiUrl = `http://127.0.0.1:8000/sensors/${encodedMacId}/?offset=7`;
+  const apiUrl = `http://10.17.5.49:8000/sensors/${encodedMacId}/?offset=7`;
 
   const handleDownloadData = async () => {
     const jwtToken = getToken(); // Retrieve the JWT token from your cache

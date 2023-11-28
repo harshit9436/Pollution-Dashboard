@@ -19,7 +19,7 @@ export default function LoginForm() {
       formData.append('password', password);
 
       // Send a request to your backend to obtain the JWT token
-      const response = await fetch('http://127.0.0.1:8000/token/', {
+      const response = await fetch('http://10.17.5.49:8000/token/', {
         method: 'POST',
         body: formData,
       });
@@ -32,7 +32,7 @@ export default function LoginForm() {
         // Store the JWT token in local storage or any other client-side storage mechanism
         localStorage.setItem('jwtToken', jwtToken);
 
-        const url = 'http://127.0.0.1:8000/test_token/';  // Replace with your actual backend URL
+        const url = 'http://10.17.5.49:8000/test_token/';  // Replace with your actual backend URL
 
         fetch(url, {
           method: 'GET',
