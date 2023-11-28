@@ -1,18 +1,18 @@
-import React, { useState, useEffect,useRef } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import React, { useState, useEffect, useRef } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import L from 'leaflet';
 import axios from 'axios';
-import SimplCard from '../components/card/SimpleCard.js';
-// import Button from '@mui/material/Button';
+import Papa from 'papaparse';
+import SimplCard from '../components/card/SimpleCard';
 import Fab from '@mui/material/Fab';
 import { Divider } from '@mui/material';
 
+// Import necessary styles for MarkerClusterGroup if you haven't already
 const activeIconStyle = {
   iconUrl: '/assets/icons/green.svg',
   iconSize: [50, 50],
 };
-
 const inactiveIconStyle = {
   iconUrl: '/assets/icons/red.svg',
   iconSize: [50, 50],
@@ -80,25 +80,44 @@ const styles = {
     fontSize: '15px',
   },
 };
+// Define your icon styles...
+
 
 export default function App() {
+  const [points, setPoints] = useState([]);
+  const [csvFile, setCsvFile] = useState('/assets/routes/M03.csv');
+  const [polylineColor, setPolylineColor] = useState('blue');
   const [selectedImageIndex, setSelectedImageIndex] = useState(null);
-  
-  const myComponentRef=useRef(null);  
-  const scrollToComponent = () => {
-    if (myComponentRef.current) {
-      myComponentRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  };
-  const handleIconClick = (index) => {
-    setSelectedImageIndex(index);
-    scrollToComponent();
-  };
   const [markersData, setMarkersData] = useState([]);
   const [lastRefreshTime, setLastRefreshTime] = useState(new Date());
+  const myComponentRef = useRef(null);
+
+  // Fetch CSV data for polyline
+  useEffect(() => {
+    const fetchCsvData = async () => {
+      try {
+        const response = await fetch(csvFile);
+        const text = await response.text();
+        const result = Papa.parse(text, { header: false });
+
+        const parsedPoints = result.data
+          .map(row => [parseFloat(row[0]), parseFloat(row[1])])
+          .filter(coords => !isNaN(coords[0]) && !isNaN(coords[1]));
+
+        setPoints(parsedPoints);
+        setPolylineColor(csvFile === '/assets/routes/M03.csv' ? 'blue' : 'red');
+      } catch (error) {
+        console.error('Error fetching or parsing CSV:', error);
+      }
+    };
+
+    fetchCsvData();
+  }, [csvFile]);
+
+  // Fetch marker data from API
   useEffect(() => {
     // Define the URL of your backend API
-    const apiUrl = 'http://10.17.5.49:8000/list/sensors_nonstatic/';
+    const apiUrl = 'http://127.0.0.1:8000/list/sensors_nonstatic/';
 
     // Use Axios to make a GET request to the API
     axios
@@ -154,6 +173,16 @@ export default function App() {
     return () => clearInterval(refreshInterval);
   }, []);
 
+  // Handlers
+  const handleToggleCsv = () => {
+    setCsvFile(prevCsvFile => (prevCsvFile === '/assets/routes/M03.csv' ? '/assets/routes/M02.csv' : '/assets/routes/M03.csv'));
+  };
+
+  const handleIconClick = index => {
+    setSelectedImageIndex(index);
+    myComponentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   const createClusterCustomIcon = function (cluster) {
     return L.divIcon({
       html: `
@@ -171,18 +200,18 @@ export default function App() {
       boxShadow: '0 0 0px 5px #fff',
     });
   };
-  
+
   return (
     <div style={styles['*']}>
       <div id="root" style={styles['#root']}>
         <MapContainer center={[22.572, 88.364]} zoom={12} style={styles['.leaflet-container']}>
           <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            attribution='&copy; OpenStreetMap contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-
+          <Polyline positions={points} color={polylineColor} />
           <MarkerClusterGroup chunkedLoading iconCreateFunction={createClusterCustomIcon}>
-            {markersData.map((marker, index) => (
+             {markersData.map((marker, index) => (
               <Marker key={index} position={marker.geocode} icon={marker.icon}>
                 <Popup>
                   <div>
@@ -197,6 +226,7 @@ export default function App() {
               </Marker>
             ))}
           </MarkerClusterGroup>
+
         </MapContainer>
       </div>
       {selectedImageIndex !== null && (
@@ -208,6 +238,11 @@ export default function App() {
           />
         </div>
       )}
+      <div>
+        <Fab variant="extended" size="medium" color="primary" onClick={handleToggleCsv}>
+          Toggle Route
+        </Fab>
+      </div>
     </div>
   );
 }
