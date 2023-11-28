@@ -50,21 +50,7 @@ export default function LoginPage() {
       </Helmet>
 
       <StyledRoot>
-        {/* <Logo
-          sx={{
-            position: 'fixed',
-            top: { xs: 16, sm: 24, md: 40 },
-            left: { xs: 16, sm: 24, md: 40 },
-          }}
-        /> */}
-        {/* <Logo
-          sx={{
-            position: 'fixed',
-            top: { xs: '5vw', sm: '2vw', md: '5vw' },
-            left: { xs: '5vw', sm: '8vw', md: '10vw' },
-          }}
-        /> */}
-
+      
 
         {mdUp && (
           <StyledSection>

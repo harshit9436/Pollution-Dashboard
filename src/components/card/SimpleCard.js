@@ -30,6 +30,24 @@ export default function SimpleCard({ title, subheader, macid, ...other }) {
       return null;
     }
   };
+  // const apiUrl = `http://10.17.5.49:8000/sensors/${encodedMacId}/?offset=7`;
+  // const handleDownloadData = () => {
+  //   axios
+  //     .get(apiUrl)
+  //     .then((response) => {
+  //       const dataToDownload = response.data;
+  //       const csvData = Papa.unparse(dataToDownload);
+  //       const blob = new Blob([csvData], { type: 'text/csv' });
+  //       const blobUrl = window.URL.createObjectURL(blob);
+  //       const a = document.createElement('a');
+  //       a.href = blobUrl;
+  //       a.download = 'data.csv';
+  //       a.click();
+  //       window.URL.revokeObjectURL(blobUrl);
+  //     })
+  //     .catch((error) => {
+  //       console.error('Error fetching data:', error);
+  //     });
 
   const apiUrl = `http://10.17.5.49:8000/sensors/${encodedMacId}/?offset=7`;
 
@@ -65,6 +83,41 @@ export default function SimpleCard({ title, subheader, macid, ...other }) {
       console.error('Error fetching data:', error);
     }
   };
+
+  // const apiUrl = `http://10.17.5.49:8000/sensors/${encodedMacId}/?offset=7`;
+
+  // const handleDownloadData = async () => {
+  //   const jwtToken = getToken(); // Retrieve the JWT token from your cache
+  //   try {
+  //     if (jwtToken) {
+  //       const response = await axios.get(apiUrl, {
+  //         headers: {
+  //           Authorization: `Bearer ${jwtToken}`,
+  //         },
+  //       });
+
+  //       if (response.status === 200) {
+  //         const dataToDownload = response.data;
+  //         const csvData = Papa.unparse(dataToDownload);
+  //         const blob = new Blob([csvData], { type: 'text/csv' });
+  //         const blobUrl = window.URL.createObjectURL(blob);
+  //         const a = document.createElement('a');
+  //         a.href = blobUrl;
+  //         a.download = 'data.csv';
+  //         a.click();
+  //         window.URL.revokeObjectURL(blobUrl);
+  //       } else {
+  //         // Handle any other status codes, if needed
+  //         console.error('Failed to fetch data:', response.status);
+  //       }
+  //     } else {
+  //       // Show a message that login is required
+  //       alert('Login required');
+  //     }
+  //   } catch (error) {
+  //     console.error('Error fetching data:', error);
+  //   }
+  // };
 
   useEffect(() => {
     // Your existing code for fetching sensor data here
@@ -114,6 +167,7 @@ export default function SimpleCard({ title, subheader, macid, ...other }) {
       y: {
         formatter: (y) => {
           if (typeof y !== 'undefined') {
+            return `${y.toFixed(0)}`;
             return `${y.toFixed(0)}`;
           }
           return y;

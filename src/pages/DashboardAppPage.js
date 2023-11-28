@@ -203,7 +203,7 @@ export default function DashboardAppPage() {
                   id: 2,
                   title: 'Static Sensors',
                   description:
-                    'Location and information of Static sensor',
+                    'Location and information of static sensor',
                   image: `/assets/images/covers/cover_3.jpg`,
                   postedAt: faker.date.recent(),
                   path: '/dashboard/mapstatic',
@@ -212,19 +212,19 @@ export default function DashboardAppPage() {
                   id: 3,
                   title: 'Hourly PM 2.5',
                   description:
-                    'Last hour average PM 2.5 sensorwise on map',
+                    'Last hour average PM 2.5 sensorwise on map, to be added',
                   image: `/assets/images/covers/cover_4.jpg`,
                   postedAt: faker.date.recent(),
-                  path: '/dashboard/maps',
+                  path: '/dashboard/mapstatic',
                 },
                 {
                   id: 4,
                   title: 'PM2.5 Interpolation',
                   description:
-                    ' Interpolation of last hour average PM 2.5 over the entire deployment area',
+                    ' Interpolation of last hour average PM 2.5 over the entire deployment area, to be added',
                   image: `/assets/images/covers/cover_5.jpg`,
                   postedAt: faker.date.recent(),
-                  path: '/dashboard/maps',
+                  path: '/dashboard/heatmap',
                 },
               ]}
             />

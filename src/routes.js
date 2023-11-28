@@ -8,6 +8,7 @@ import UserPage from './pages/UserPage';
 import LoginPage from './pages/LoginPage';
 import AdminPage from './pages/AdminPage';
 import MapPage from './pages/MapPage';
+import HeatMap from './pages/Heatmap';
 import MapStatic from './pages/MapStatic';
 import Page404 from './pages/Page404';
 import ProductsPage from './pages/ProductsPage';
@@ -28,6 +29,7 @@ export default function Router() {
         { path: 'blog', element: <BlogPage /> },
         { path: 'maps', element: <MapPage />, },
         { path: 'mapstatic', element: <MapStatic/>, },
+        { path: 'heatmap', element: <HeatMap/>,},
       ],
     },
     { 

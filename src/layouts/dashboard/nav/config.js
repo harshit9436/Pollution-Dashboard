@@ -21,7 +21,11 @@ const navConfig = [
   //   path: '/dashboard/products',
   //   icon: icon('ic_cart'),
   // },
- 
+  // {
+  //   title: 'blog',
+  //   path: 'https://www.aqi.in/in/dashboard/india',
+  //   icon: icon('ic_blog'),
+  // },
   // {
   //   title: 'maps',
   //   path: '/dashboard/maps',
